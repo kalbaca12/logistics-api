@@ -82,7 +82,7 @@ components:
         length: { type: number, format: float, example: 25.0 }
         width:  { type: number, format: float, example: 18.0 }
         height: { type: number, format: float, example: 10.0 }
-        fragile:{ type: boolean, example: true }
+        fragile: { type: boolean, example: true }
         description: { type: string, example: Books }
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
@@ -453,7 +453,7 @@ paths:
                 length: { type: number, format: float }
                 width:  { type: number, format: float }
                 height: { type: number, format: float }
-                fragile:{ type: boolean }
+                fragile: { type: boolean }
                 description: { type: string }
               required: [shipment_id, weight]
             example:
@@ -504,7 +504,7 @@ paths:
                 length: { type: number, format: float }
                 width:  { type: number, format: float }
                 height: { type: number, format: float }
-                fragile:{ type: boolean }
+                fragile: { type: boolean }
                 description: { type: string }
             example:
               weight: 3.0
