@@ -48,7 +48,7 @@ Paleidimo seka:
 
 ## OpenAPI specifikacija
 
-Failas: `docs/openapi.yaml` 
+Failas: `openapi.yaml` 
 
 ## Greita demonstracija
 
