@@ -12,23 +12,24 @@
 ## 🚀 Greitas startas
 
 ```bash
-git clone <jūsų-repo-url>
-cd logistics-api/api
-
-cp .env.example .env
-# SQLite (rekomenduojama vietinei demonstracijai)
-# FAILO KELIAS .env: DB_CONNECTION=sqlite, DB_DATABASE=/absolute/path/database/database.sqlite
-
-# Sukurkite SQLite failą, jei reikia:
-mkdir -p database
-touch database/database.sqlite
-
 composer install
+copy .env.example .env
 php artisan key:generate
+php artisan jwt:secret --force
+mkdir database 2>$null
+type NUL > database\database.sqlite
+
+# DB_CONNECTION=sqlite
+# DB_DATABASE=database/database.sqlite
+# CACHE_DRIVER=file
+# SESSION_DRIVER=file
+# QUEUE_CONNECTION=sync
+
+php artisan config:clear
+
 php artisan migrate --seed
 
 php artisan serve
-# http://127.0.0.1:8000
 ```
 
 > Jei naudositės MySQL vietoj SQLite, .env faile nurodykite DB prisijungimus (pvz. DB_DATABASE=`logistics_api`).
