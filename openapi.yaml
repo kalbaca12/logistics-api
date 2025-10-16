@@ -1,0 +1,532 @@
+openapi: 3.0.3
+info:
+  title: Logistics API
+  version: "1.0.0"
+  description: |
+    REST API logistikos užduočiai (JWT + rolės). Visi atsakymai `application/json`.
+    Bazinis URL: `http://127.0.0.1:8000`
+
+servers:
+  - url: http://127.0.0.1:8000
+
+tags:
+  - name: Auth
+  - name: Warehouses
+  - name: Shipments
+  - name: Packages
+  - name: Utility
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Not Found
+        errors:
+          type: object
+          additionalProperties: true
+    AuthToken:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          example: 3600
+      required: [access_token, token_type, expires_in]
+    User:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: TestUser }
+        email: { type: string, example: user@example.com }
+        role: { type: string, enum: [guest, operator, admin], example: guest }
+        email_verified_at: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    Warehouse:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: Main }
+        address: { type: string, example: Kaunas }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [name]
+    Shipment:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        code: { type: string, example: SHP-1001 }
+        status: { type: string, example: created }
+        warehouse_id: { type: integer, example: 1 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [code, status, warehouse_id]
+    Package:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        shipment_id: { type: integer, example: 1 }
+        weight: { type: number, format: float, example: 2.5 }
+        length: { type: number, format: float, example: 25.0 }
+        width:  { type: number, format: float, example: 18.0 }
+        height: { type: number, format: float, example: 10.0 }
+        fragile:{ type: boolean, example: true }
+        description: { type: string, example: Books }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+      required: [shipment_id, weight]
+
+paths:
+  /api/v1/ping:
+    get:
+      tags: [Utility]
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/v1/auth/register:
+    post:
+      tags: [Auth]
+      summary: Registracija
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                email: { type: string }
+                password: { type: string, format: password, minLength: 8 }
+                role:
+                  type: string
+                  enum: [guest, operator, admin]
+                  description: Pasirinktinai; jei nepaduota – 'guest'
+              required: [name, email, password]
+            example:
+              name: TestUser
+              email: user@example.com
+              password: secret1234
+              role: guest
+      responses:
+        '201':
+          description: Sukurta
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: Registered }
+                  user: { $ref: '#/components/schemas/User' }
+        '422':
+          description: Blogas payload
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Prisijungimas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+              required: [email, password]
+            example:
+              email: user@example.com
+              password: secret1234
+      responses:
+        '200':
+          description: Sėkmingai prisijungta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthToken' }
+        '401':
+          description: Neteisingi duomenys
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Mano profilis
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401':
+          description: Unauthenticated
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Atsijungimas (token invaliduojamas)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: OK (arba 204)
+        '204':
+          description: No Content
+        '401':
+          description: Unauthenticated
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Atnaujinti JWT
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Naujas token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthToken' }
+        '401':
+          description: Unauthenticated
+
+  /api/v1/warehouses:
+    get:
+      tags: [Warehouses]
+      summary: Sandėlių sąrašas
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Warehouse' }
+    post:
+      tags: [Warehouses]
+      summary: Sukurti sandėlį (admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                address: { type: string }
+              required: [name]
+            example:
+              name: Main
+              address: Kaunas
+      responses:
+        '201':
+          description: Sukurta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Warehouse' }
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Forbidden
+
+  /api/v1/warehouses/{id}:
+    get:
+      tags: [Warehouses]
+      summary: Gauti sandėlį pagal ID
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Warehouse' }
+        '404':
+          description: Nerasta
+    put:
+      tags: [Warehouses]
+      summary: Atnaujinti sandėlį (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                address: { type: string }
+            example:
+              name: Updated
+              address: Vilnius
+      responses:
+        '200':
+          description: Atnaujinta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Warehouse' }
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+        '404': { description: Nerasta }
+    delete:
+      tags: [Warehouses]
+      summary: Ištrinti sandėlį (admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: integer }
+          required: true
+      responses:
+        '204':
+          description: Ištrinta
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+        '404': { description: Nerasta }
+
+  /api/v1/shipments:
+    get:
+      tags: [Shipments]
+      summary: Siuntų sąrašas
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Shipment' }
+    post:
+      tags: [Shipments]
+      summary: Sukurti siuntą (operator/admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+                status: { type: string }
+                warehouse_id: { type: integer }
+              required: [code, status, warehouse_id]
+            example:
+              code: SHP-1001
+              status: created
+              warehouse_id: 1
+      responses:
+        '201':
+          description: Sukurta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shipment' }
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+
+  /api/v1/shipments/{id}:
+    get:
+      tags: [Shipments]
+      summary: Gauti siuntą pagal ID
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shipment' }
+        '404': { description: Nerasta }
+    put:
+      tags: [Shipments]
+      summary: Atnaujinti siuntą (operator/admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code: { type: string }
+                status: { type: string }
+                warehouse_id: { type: integer }
+            example:
+              status: in_transit
+      responses:
+        '200':
+          description: Atnaujinta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Shipment' }
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+        '404': { description: Nerasta }
+    delete:
+      tags: [Shipments]
+      summary: Ištrinti siuntą (operator/admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      responses:
+        '204':
+          description: Ištrinta
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+        '404': { description: Nerasta }
+
+  /api/v1/shipments/{id}/packages:
+    get:
+      tags: [Shipments]
+      summary: Gauti siuntos pakuotes
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Package' }
+        '404': { description: Nerasta }
+
+  /api/v1/packages:
+    get:
+      tags: [Packages]
+      summary: Pakuočių sąrašas
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Package' }
+    post:
+      tags: [Packages]
+      summary: Sukurti pakuotę (operator/admin)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shipment_id: { type: integer }
+                weight: { type: number, format: float }
+                length: { type: number, format: float }
+                width:  { type: number, format: float }
+                height: { type: number, format: float }
+                fragile:{ type: boolean }
+                description: { type: string }
+              required: [shipment_id, weight]
+            example:
+              shipment_id: 1
+              weight: 2.5
+              length: 25.0
+              width: 18.0
+              height: 10.0
+              fragile: true
+              description: Electronics
+      responses:
+        '201':
+          description: Sukurta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Package' }
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+
+  /api/v1/packages/{id}:
+    get:
+      tags: [Packages]
+      summary: Gauti pakuotę pagal ID
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Package' }
+        '404': { description: Nerasta }
+    put:
+      tags: [Packages]
+      summary: Atnaujinti pakuotę (operator/admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                shipment_id: { type: integer }
+                weight: { type: number, format: float }
+                length: { type: number, format: float }
+                width:  { type: number, format: float }
+                height: { type: number, format: float }
+                fragile:{ type: boolean }
+                description: { type: string }
+            example:
+              weight: 3.0
+              fragile: false
+      responses:
+        '200':
+          description: Atnaujinta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Package' }
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+        '404': { description: Nerasta }
+    delete:
+      tags: [Packages]
+      summary: Ištrinti pakuotę (operator/admin)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { in: path, name: id, schema: {type: integer}, required: true }
+      responses:
+        '204':
+          description: Ištrinta
+        '401': { description: Unauthenticated }
+        '403': { description: Forbidden }
+        '404': { description: Nerasta }
