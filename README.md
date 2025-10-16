@@ -1,15 +1,11 @@
-# Logistics API — 1 laboratorinis (Laravel + JWT + Rolės)
-
-Šis projektas įgyvendina REST API su autentifikacija (JWT) ir rolėmis (guest/operator/admin). Paruošta demonstracijai per ~15 s su Postman kolekcija ir testais.
-
-## ⚙️ Aplinka
+## Aplinka
 
 - PHP 8.2+
 - Composer
 - Laravel (projektas jau paruoštas)
 - DB: **SQLite** (lokaliam paleidimui) arba MySQL. Pvz. DB pavadinimas: `logistics_api`
 
-## 🚀 Greitas startas
+## Startas
 
 ```bash
 composer install
@@ -34,12 +30,12 @@ php artisan serve
 
 > Jei naudositės MySQL vietoj SQLite, .env faile nurodykite DB prisijungimus (pvz. DB_DATABASE=`logistics_api`).
 
-## 🔐 Autentifikacija
+## Autentifikacija
 
 - Prisijungimas grąžina **JWT**.
 - Protected maršrutai naudoja `jwt.auth` (o rolės tikrinamos `role:...` vidiniu middleware).
 
-## 🧪 Postman
+## Postman
 
 Importuokite:
 - Kolekciją: **Logistics_API_Lab1_FULL_with_tests.postman_collection.json**
@@ -52,7 +48,7 @@ Paleidimo seka:
 4. **Warehouses/Create** → **201** (jei role=admin) / **403** (jei ne)
 5. **Negative**: 404, 422, 401 testai
 
-## 📄 OpenAPI specifikacija
+## OpenAPI specifikacija
 
 Failas: `docs/openapi.yaml` (šiame pateikime pridėtas kaip `openapi.yaml`).  
 Galite atsidaryti **Swagger UI**:
@@ -64,11 +60,11 @@ docker run -p 8080:8080 \
 # → http://127.0.0.1:8080
 ```
 
-## 🗃️ Prasmingi duomenys (seed'ai)
+## Prasmingi duomenys (seed'ai)
 
 Minimalūs seed'ai sukuria kelis sandėlius, siuntas ir pakuotes (jei dar nepadaryta — rekomenduojama pridėti).
 
-## 🧪 Greita demonstracija (≤ ~15 s)
+## Greita demonstracija (≤ ~15 s)
 
 1. `GET /api/v1/ping` → **200**
 2. `POST /api/v1/auth/register` → **201**
@@ -86,7 +82,7 @@ Minimalūs seed'ai sukuria kelis sandėlius, siuntas ir pakuotes (jei dar nepada
 14. `POST /api/v1/auth/logout` → **200/204**
 15. Vėl **GET /api/v1/auth/me** (su senu token) → **401**
 
-## 🔎 Teisingi statusai
+## Teisingi statusai
 
 - **201** – resursas sukurtas
 - **200** – sėkminga užklausa
@@ -97,7 +93,7 @@ Minimalūs seed'ai sukuria kelis sandėlius, siuntas ir pakuotes (jei dar nepada
 - **422** – blogas payload (validation)
 - **405** – neteisingas HTTP metodas
 
-## 📦 Struktūra (svarbiausi failai)
+## Struktūra (svarbiausi failai)
 
 - `routes/api.php` – maršrutai (JWT + rolės)
 - `app/Http/Controllers/*Controller.php` – CRUD logika
@@ -106,5 +102,3 @@ Minimalūs seed'ai sukuria kelis sandėlius, siuntas ir pakuotes (jei dar nepada
 - `openapi.yaml` – OpenAPI specifikacija (visi metodai)
 
 ---
-
-**Sėkmės gynime!** Jei reikia – galima pridėti seed'ų pavyzdžius arba Swagger UI Docker komandą į `Makefile`.
