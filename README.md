@@ -3,7 +3,7 @@
 - PHP 8.2+
 - Composer
 - Laravel (projektas jau paruoštas)
-- DB: **SQLite** (lokaliam paleidimui) arba MySQL. Pvz. DB pavadinimas: `logistics_api`
+- DB: SQLite
 
 ## Startas
 
