@@ -48,21 +48,9 @@ Paleidimo seka:
 
 ## OpenAPI specifikacija
 
-Failas: `docs/openapi.yaml` (šiame pateikime pridėtas kaip `openapi.yaml`).  
-Galite atsidaryti **Swagger UI**:
-```bash
-docker run -p 8080:8080 \
-  -e SWAGGER_JSON=/foo/openapi.yaml \
-  -v "$(pwd)/openapi.yaml:/foo/openapi.yaml" \
-  swaggerapi/swagger-ui
-# → http://127.0.0.1:8080
-```
+Failas: `docs/openapi.yaml` 
 
-## Prasmingi duomenys (seed'ai)
-
-Minimalūs seed'ai sukuria kelis sandėlius, siuntas ir pakuotes (jei dar nepadaryta — rekomenduojama pridėti).
-
-## Greita demonstracija (≤ ~15 s)
+## Greita demonstracija
 
 1. `GET /api/v1/ping` → **200**
 2. `POST /api/v1/auth/register` → **201**
