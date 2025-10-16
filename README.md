@@ -28,8 +28,6 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-> Jei naudositės MySQL vietoj SQLite, .env faile nurodykite DB prisijungimus (pvz. DB_DATABASE=`logistics_api`).
-
 ## Autentifikacija
 
 - Prisijungimas grąžina **JWT**.
