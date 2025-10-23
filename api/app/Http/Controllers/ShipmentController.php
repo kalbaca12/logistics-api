@@ -2,44 +2,67 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Shipment; 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ShipmentController extends Controller
 {
-    public function index(\Illuminate\Http\Request $r){
-    $q = \App\Models\Shipment::query()->with('warehouse');
-    if ($r->filled('warehouse_id')) $q->where('warehouse_id',$r->warehouse_id);
-    if ($r->filled('status')) $q->where('status',$r->status);
-    return response()->json($q->get());
+    public function index()
+{
+    return response()->json(
+        \App\Models\Shipment::with('warehouse')->withCount('packages')->get()
+    );
 }
-public function show($id){ return response()->json(\App\Models\Shipment::with('packages')->findOrFail($id)); }
-public function store(\Illuminate\Http\Request $r){
+
+public function show($id)
+{
+    // include related packages (and warehouse if you want)
+    $shipment = \App\Models\Shipment::with(['packages', 'warehouse'])->findOrFail($id);
+    return response()->json($shipment);
+}
+
+public function store(\Illuminate\Http\Request $r)
+{
     $data = $r->validate([
-        'warehouse_id'=>'required|exists:warehouses,id',
-        'status'=>'in:created,in_transit,delivered,canceled'
+        'code'         => 'required|string|max:50|unique:shipments,code',
+        'status'       => 'required|string',
+        'warehouse_id' => 'required|integer|exists:warehouses,id',
     ]);
-    $data['user_id'] = auth('api')->id();
-    $s = \App\Models\Shipment::create($data);
-    return response()->json($s, 201);
+
+    // optional: track creator
+    $data['user_id'] = auth('api')->id();  // remove if you don't want this
+
+    $shipment = \App\Models\Shipment::create($data);
+    return response()->json($shipment, 201);
 }
-public function update(\Illuminate\Http\Request $r, $id){
-    $s = \App\Models\Shipment::findOrFail($id);
+
+public function update(\Illuminate\Http\Request $r, $id)
+{
+    $shipment = \App\Models\Shipment::findOrFail($id);
+
     $data = $r->validate([
-        'status'=>'in:created,in_transit,delivered,canceled',
-        'warehouse_id'=>'exists:warehouses,id'
+        'code'         => 'sometimes|string|max:50|unique:shipments,code,'.$shipment->id,
+        'status'       => 'sometimes|string',
+        'warehouse_id' => 'sometimes|integer|exists:warehouses,id',
     ]);
-    $s->update($data);
-    return response()->json($s);
+
+    $shipment->update($data);
+    return response()->json($shipment);
 }
-public function destroy($id){
-    $s = \App\Models\Shipment::findOrFail($id);
-    if ($s->status !== 'created') {
-        return response()->json(['error'=>'Only "created" shipments can be deleted'], 400);
+public function destroy($id)
+    {
+        $shipment = Shipment::findOrFail($id);
+
+        DB::transaction(function () use ($shipment) {
+            $shipment->packages()->delete();
+            $shipment->delete();
+        });
+
+        // 204 No Content on success
+        return response()->noContent();
     }
-    $s->delete();
-    return response()->noContent(); // 204
-}
 
 // HIERARCHINIS: visos pakuotės konkrečiai siuntai
 public function packages($id){
