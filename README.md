@@ -48,7 +48,9 @@ Paleidimo seka:
 
 ## OpenAPI specifikacija
 
-Failas: `openapi.yaml` 
+Failas: `openapi.yaml`
+
+https://editor.swagger.io
 
 ## Greita demonstracija
 
